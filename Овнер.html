@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поиск по Owner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .search-container {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        input {
+            padding: 10px;
+            width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+        }
+        .result-item {
+            background: white;
+            border-left: 4px solid #4CAF50;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .result-item h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .field {
+            margin-bottom: 8px;
+        }
+        .field-name {
+            font-weight: bold;
+            display: inline-block;
+            width: 120px;
+        }
+        code {
+            background: #f0f0f0;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .not-found {
+            color: #e74c3c;
+            text-align: center;
+            padding: 20px;
+            font-size: 18px;
+        }
+        .search-box {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .initial-message {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>Поиск информации по Owner</h1>
+    
+    <div class="search-container">
+        <div class="search-box">
+            <input type="text" id="ownerInput" placeholder="Введите owner (например: ores, mosen, birsk)">
+            <button onclick="searchData()">Найти</button>
+        </div>
+        <div style="text-align: center; color: #666;">
+            Примеры: ores, mosen, birsk, sayany, TPP@lar.tech
+        </div>
+    </div>
+    
+    <div id="result">
+        <div class="initial-message">Введите owner в поле поиска и нажмите "Найти"</div>
+    </div>
+
+    <script>
+        // Полные данные из Excel
+        const data = [
+            {
+                "Applications": "{metering-server,tcp-proxy,metering-console,userspace}",
+                "часы": "03:00:00",
+                "owner": "ores",
+                "SQL": "update device set application_id = '{metering-server,tcp-proxy,metering-console,userspace}', owner = 'ores' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,metering-console,userspace,entels_bges,nforce_web_new,userspace}",
+                "часы": "03:00:00",
+                "owner": "birsk",
+                "SQL": "update device set application_id = '{metering-server,metering-console,userspace,entels_bges,nforce_web_new,userspace}', owner = 'birsk' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-console,userspace,tcp-proxy,metering-server,dze_prosoft}",
+                "часы": "03:00:00",
+                "owner": "mosen_домодевский",
+                "SQL": "update device set application_id = '{metering-console,userspace,tcp-proxy,metering-server,dze_prosoft}', owner = 'mosen' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,entels_mishkino,tcp-proxy,userspace}",
+                "часы": "05:00:00",
+                "owner": "mishkino",
+                "SQL": "update device set application_id = '{metering-server,entels_mishkino,tcp-proxy,userspace}', owner = 'mishkino' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,tcp-proxy,entels_bizhbulyak,userspace}",
+                "часы": "05:00:00",
+                "owner": "bizhbulyak",
+                "SQL": "update device set application_id = '{metering-server,tcp-proxy,entels_bizhbulyak,userspace}', owner = 'bizhbulyak' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-console,userspace,tcp-proxy,metering-server,spd_prosoft}",
+                "часы": "03:00:00",
+                "owner": "mosen_Сергиево-Посадский",
+                "SQL": "update device set application_id = '{metering-console,userspace,tcp-proxy,metering-server,spd_prosoft}', owner = 'mosen' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-console,userspace,metering-server}",
+                "часы": "07:00:00",
+                "owner": "sayany",
+                "SQL": "update device set application_id = '{metering-console,userspace,metering-server}', owner = 'sayany' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,tcp-proxy,metering-console,entels_belges,userspace}",
+                "часы": "05:00:00",
+                "owner": "belges",
+                "SQL": "update device set application_id = '{metering-server,tcp-proxy,metering-console,entels_belges,userspace}', owner = 'belges' where deveui in ()"
+            },
+            {
+                "Applications": "{tcp-proxy,userspace,entels_oktyabseti,metering-server,metering-console}",
+                "часы": "05:00:00",
+                "owner": "oktyabseti",
+                "SQL": "update device set application_id = '{tcp-proxy,userspace,entels_oktyabseti,metering-server,metering-console}', owner = 'oktyabseti' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-console,lar.cloud,sntportal.ru,metering-server}",
+                "часы": "03:00:00",
+                "owner": "TPP@lar.tech",
+                "SQL": "update device set application_id = '{metering-console,lar.cloud,sntportal.ru,metering-server}', owner = 'TPP@lar.tech' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,metering-console,userspace}",
+                "часы": "03:00:00",
+                "owner": "rosinka",
+                "SQL": "update device set application_id = '{metering-server,metering-console,userspace}', owner = 'rosinka' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,tcp-proxy,userspace}",
+                "часы": "05:00:00",
+                "owner": "magnitogorsk",
+                "SQL": "update device set application_id = '{metering-server,tcp-proxy,userspace}', owner = 'magnitogorsk' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-console,userspace,tcp-proxy,metering-server,pp_prosoft}",
+                "часы": "03:00:00",
+                "owner": "mosen_Павло-Пасадский",
+                "SQL": "update device set application_id = '{metering-console,userspace,tcp-proxy,metering-server,pp_prosoft}', owner = 'mosen' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-console,userspace,tcp-proxy,metering-server,ram_prosoft}",
+                "часы": "03:00:00",
+                "owner": "mosen_раменский",
+                "SQL": "update device set application_id = '{metering-console,userspace,tcp-proxy,metering-server,ram_prosoft}', owner = 'mosen' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-console,userspace,tcp-proxy,metering-server,chel_prosoft}",
+                "часы": "03:00:00",
+                "owner": "mosen_щелковский",
+                "SQL": "update device set application_id = '{metering-console,userspace,tcp-proxy,metering-server,chel_prosoft}', owner = 'mosen' where deveui in ()"
+            },
+            {
+                "Applications": "{tcp-proxy,metering-console,nforce_rseti,nforce_web_new,metering-server}",
+                "часы": "03:00:00",
+                "owner": "rseti@lar.tech",
+                "SQL": "update device set application_id = '{tcp-proxy,metering-console,nforce_rseti,nforce_web_new,metering-server}', owner = 'rseti@lar.tech' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-console,userspace,tcp-proxy,metering-server,klm_prosoft}",
+                "часы": "03:00:00",
+                "owner": "mosen_коломенский",
+                "SQL": "update device set application_id = '{metering-console,userspace,tcp-proxy,metering-server,klm_prosoft}', owner = 'mosen' where deveui in ()"
+            },
+            {
+                "Applications": "{Matrix,metering-server,metering-console,userspace}",
+                "часы": "04:00:00",
+                "owner": "EnergoSamara",
+                "SQL": "update device set application_id = '{Matrix,metering-server,metering-console,userspace}', owner = 'EnergoSamara' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,metering-console,userspace}",
+                "часы": "03:00:00",
+                "owner": "milur",
+                "SQL": "update device set application_id = '{metering-server,metering-console,userspace}', owner = 'milur' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,nforce_irkutskenergo,metering-console,userspace}",
+                "часы": "08:00:00",
+                "owner": "irkutskenergo",
+                "SQL": "update device set application_id = '{metering-server,nforce_irkutskenergo,metering-console,userspace}', owner = 'irkutskenergo' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,userspace,metering-console,vitim_enforce,nforce_vitim}",
+                "часы": "05:00:00",
+                "owner": "vitim",
+                "SQL": "update device set application_id = '{metering-server,userspace,metering-console,vitim_enforce,nforce_vitim}', owner = 'vitim' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-console,entels_baltachevo,userspace,tcp-proxy,metering-server}",
+                "часы": "05:00:00",
+                "owner": "baltachevo",
+                "SQL": "update device set application_id = '{metering-console,entels_baltachevo,userspace,tcp-proxy,metering-server}', owner = 'baltachevo' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,metering-console,userspace}",
+                "часы": "03:00:00",
+                "owner": "ao_psk",
+                "SQL": "update device set application_id = '{metering-server,metering-console,userspace}', owner = 'ao_psk' where deveui in ()"
+            },
+            {
+                "Applications": "{enviro_rtk_prod,rtk_prod,userspace,metering-server,metering-console,nforce_web_new,enviro,rtk_test,rtk_prod_1}",
+                "часы": "03:00:00",
+                "owner": "rtk_prod",
+                "SQL": "update device set application_id = '{enviro_rtk_prod,rtk_prod,userspace,metering-server,metering-console,nforce_web_new,enviro,rtk_test,rtk_prod_1}', owner = 'rtk_prod' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,tcp-proxy,metering-console,userspace}",
+                "часы": "04:00:00",
+                "owner": "orestol",
+                "SQL": "update device set application_id = '{metering-server,tcp-proxy,metering-console,userspace}', owner = 'orestol' where deveui in ()"
+            },
+            {
+                 "Applications": "{metering-console,userspace,tcp-proxy,metering-server,sha_prosoft}",
+                "часы": "03:00:00",
+                "owner": "mosen_шатурский",
+                "SQL": "update device set application_id = '{metering-console,userspace,tcp-proxy,metering-server,sha_prosoft}', owner = 'mosen' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,metering-console,userspace}",
+                "часы": "03:00:00",
+                "owner": "ruses",
+                "SQL": "update device set application_id = '{metering-server,metering-console,userspace}', owner = 'ruses' where deveui in ()"
+            },
+            {
+                "Applications": "{userspace,metering-console,metering-server,tcp-proxy,entels_kshe}",
+                "часы": "05:00:00",
+                "owner": "kshe",
+                "SQL": "update device set application_id = '{userspace,metering-console,metering-server,tcp-proxy,entels_kshe}', owner = 'kshe' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-console,userspace,metering-server,nforce_web_new,nforce_elmit}",
+                "часы": "03:00:00",
+                "owner": "elmit",
+                "SQL": "update device set application_id = '{metering-console,userspace,metering-server,nforce_web_new,nforce_elmit}', owner = 'elmit' where deveui in ()"
+            },
+            {
+                "Applications": "{enviro_rtk_prod,rtk_prod,userspace,metering-server,metering-console,nforce_web_new,enviro,rtk_test,rtk_prod_1}",
+                "часы": "03:00:00",
+                "owner": "rtk_prod",
+                "SQL": "update device set application_id = '{enviro_rtk_prod,rtk_prod,userspace,metering-server,metering-console,nforce_web_new,enviro,rtk_test,rtk_prod_1}', owner = 'rtk_prod' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,tcp-proxy,entels_yanaul,userspace}",
+                "часы": "05:00:00",
+                "owner": "yanaul",
+                "SQL": "update device set application_id = '{metering-server,tcp-proxy,entels_yanaul,userspace}', owner = 'yanaul' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-console,tcp-proxy,metering-server,nforce_chernomorenergo,userspace}",
+                "часы": "03:00:00",
+                "owner": "chernomorenergo",
+                "SQL": "update device set application_id = '{metering-console,tcp-proxy,metering-server,nforce_chernomorenergo,userspace}', owner = 'chernomorenergo' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,metering-console,tcp-proxy,userspace,nforce_web_new}",
+                "часы": "05:00:00",
+                "owner": "kudymkar",
+                "SQL": "update device set application_id = '{metering-server,metering-console,tcp-proxy,userspace,nforce_web_new}', owner = 'kudymkar' where deveui in ()"
+            },
+            {
+                "Applications": "{entels,entels_bges,metering-console,metering-server}",
+                "часы": "05:00:00",
+                "owner": "bges@lar.tech",
+                "SQL": "update device set application_id = '{entels,entels_bges,metering-console,metering-server}', owner = 'bges@lar.tech' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,metering-console,userspace}",
+                "часы": "03:00:00",
+                "owner": "SNTHarvest",
+                "SQL": "update device set application_id = '{metering-server,metering-console,userspace}', owner = 'SNTHarvest' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,metering-console,userspace}",
+                "часы": "05:00:00",
+                "owner": "BarGes",
+                "SQL": "update device set application_id = '{metering-server,metering-console,userspace}', owner = 'BarGes' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,metering-console,krupinal@rambler.ru,userspace}",
+                "часы": "03:00:00",
+                "owner": "krupinal@rambler.ru",
+                "SQL": "update device set application_id = '{metering-server,metering-console,krupinal@rambler.ru,userspace}', owner = 'krupinal@rambler.ru' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,tcp-proxy,entels_iglino,userspace}",
+                "часы": "05:00:00",
+                "owner": "iglino",
+                "SQL": "update device set application_id = '{metering-server,tcp-proxy,entels_iglino,userspace}', owner = 'iglino' where deveui in ()"
+            },
+            {
+                "Applications": "{sntportal.ru,entels_askino,metering-server,userspace}",
+                "часы": "05:00:00",
+                "owner": "askino",
+                "SQL": "update device set application_id = '{sntportal.ru,entels_askino,metering-server,userspace}', owner = 'askino' where deveui in ()"
+            },
+            {
+                "Applications": "{tcp-proxy,userspace,metering-console,metering-server}",
+                "часы": "05:00:00",
+                "owner": "magnitogorsk",
+                "SQL": "update device set application_id = '{tcp-proxy,userspace,metering-console,metering-server}', owner = 'magnitogorsk' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-console,tcp-proxy,nforce_web_new,nekta2,nekta,nekta_grpc,metering-server,iek_nforce}",
+                "часы": "03:00:00",
+                "owner": "aoiek",
+                "SQL": "update device set application_id = '{metering-console,tcp-proxy,nforce_web_new,nekta2,nekta,nekta_grpc,metering-server,iek_nforce}', owner = 'aoiek' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,metering-console,userspace}",
+                "часы": "03:00:00",
+                "owner": "Xseti",
+                "SQL": "update device set application_id = '{metering-server,metering-console,userspace}', owner = 'Xseti' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-console,metering-server,userspace}",
+                "часы": "06:00:00",
+                "owner": "oesk",
+                "SQL": "update device set application_id = '{metering-console,metering-server,userspace}', owner = 'oesk' where deveui in ()"
+            },
+            {
+                "Applications": "{Complectenergo,metering-server,userspace}",
+                "часы": "06:00:00",
+                "owner": "elektrosetiPRK",
+                "SQL": "update device set application_id = '{Complectenergo,metering-server,userspace}', owner = 'elektrosetiPRK' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,tcp-proxy,userspace,nforce_web_new}",
+                "часы": "03:00:00",
+                "owner": "ssk",
+                "SQL": "update device set application_id = '{metering-server,tcp-proxy,userspace,nforce_web_new}', owner = 'ssk' where deveui in ()"
+            },
+            {
+                "Applications": "{enviro_rtk_prod,echo-loopback,rtk_prod_1,metering-server,rtk_prod,nforce_web_new,enviro,rtk_test,metering-console,userspace}",
+                "часы": "03:00:00",
+                "owner": "rtk_prod",
+                "SQL": "update device set application_id = '{enviro_rtk_prod,echo-loopback,rtk_prod_1,metering-server,rtk_prod,nforce_web_new,enviro,rtk_test,metering-console,userspace}', owner = 'rtk_prod' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-console,metering-server,userspace}",
+                "часы": "03:00:00",
+                "owner": "autosysen_tmb",
+                "SQL": "update device set application_id = '{metering-console,metering-server,userspace}', owner = 'autosysen_tmb' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,metering-console,userspace}",
+                "часы": "03:00:00",
+                "owner": "pkenergo",
+                "SQL": "update device set application_id = '{metering-server,metering-console,userspace}', owner = 'pkenergo' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,nforce_web_new,metering-console,opora,userspace}",
+                "часы": "03:00:00",
+                "owner": "opora",
+                "SQL": "update device set application_id = '{metering-server,nforce_web_new,metering-console,opora,userspace}', owner = 'opora' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-console,userspace,metering-server}",
+                "часы": "03:00:00",
+                "owner": "sayany_oper_tafel@lar.tech",
+                "SQL": "update device set application_id = '{metering-console,userspace,metering-server}', owner = 'sayany_oper_tafel@lar.tech' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-console,metering-server,userspace}",
+                "часы": "07:00:00",
+                "owner": "dvu@bges.ru",
+                "SQL": "update device set application_id = '{metering-console,metering-server,userspace}', owner = 'dvu@bges.ru' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,nforce_web_new,metering-console,userspace}",
+                "часы": "03:00:00",
+                "owner": "udacha",
+                "SQL": "update device set application_id = '{metering-server,nforce_web_new,metering-console,userspace}', owner = 'udacha' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,lar.cloud,cometa_grpc,userspace}",
+                "часы": "",
+                "owner": "cometa_grpc",
+                "SQL": "update device set application_id = '{metering-server,lar.cloud,cometa_grpc,userspace}', owner = 'cometa_grpc' where deveui in ()"
+            },
+            {
+                "Applications": "{userspace,metering-server,tcp-proxy,nforce_web_new}",
+                "часы": "03:00:00",
+                "owner": "techres",
+                "SQL": "update device set application_id = '{userspace,metering-server,tcp-proxy,nforce_web_new}', owner = 'techres' where deveui in ()"
+            },
+            {
+                "Applications": "{nforce_web_new,metering-console,userspace,metering-server,irkutskenergo_nforce}",
+                "часы": "03:00:00",
+                "owner": "volgaenergo",
+                "SQL": "update device set application_id = '{nforce_web_new,metering-console,userspace,metering-server,irkutskenergo_nforce}', owner = 'volgaenergo' where deveui in ()"
+            },
+            {
+                "Applications": "{lar.cloud,cometa_grpc,metering-server}",
+                "часы": "",
+                "owner": "TPP@lar.tech",
+                "SQL": "update device set application_id = '{lar.cloud,cometa_grpc,metering-server}', owner = 'TPP@lar.tech' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,metering-console,userspace}",
+                "часы": "05:00:00",
+                "owner": "kes-kmr",
+                "SQL": "update device set application_id = '{metering-server,metering-console,userspace}', owner = 'kes-kmr' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-console,metering-server,userspace,nforce_web_new,nekta_grpc}",
+                "часы": "03:00:00",
+                "owner": "snt_zary",
+                "SQL": "update device set application_id = '{metering-console,metering-server,userspace,nforce_web_new,nekta_grpc}', owner = 'snt_zary' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,metering-console,userspace}",
+                "часы": "03:00:00",
+                "owner": "Gorbunov",
+                "SQL": "update device set application_id = '{metering-server,metering-console,userspace}', owner = 'Gorbunov' where deveui in ()"
+            },
+            {
+                "Applications": "{metering-server,userspace}",
+                "часы": "03:00:00",
+                "owner": "NTO",
+                "SQL": "update device set application_id = '{metering-server,userspace}', owner = 'NTO' where deveui in ()"
+            }
+        ];
+
+        function searchData() {
+            const ownerInput = document.getElementById('ownerInput').value.trim().toLowerCase();
+            const resultDiv = document.getElementById('result');
+            
+            if (!ownerInput) {
+                resultDiv.innerHTML = '<div class="not-found">Пожалуйста, введите owner для поиска</div>';
+                return;
+            }
+
+            const foundItems = data.filter(item => 
+                item.owner && item.owner.toLowerCase().includes(ownerInput));
+
+            if (foundItems.length === 0) {
+                resultDiv.innerHTML = `<div class="not-found">Ничего не найдено для owner: ${ownerInput}</div>`;
+                return;
+            }
+
+            let html = '';
+            foundItems.forEach(item => {
+                html += `
+                <div class="result-item">
+                    <h3>${item.owner}</h3>
+                    <div class="field"><span class="field-name">Applications:</span> ${item.Applications}</div>
+                    <div class="field"><span class="field-name">Часы:</span> ${item['часы'] || 'не указано'}</div>
+                    <div class="field"><span class="field-name">SQL:</span> <code>${item.SQL}</code></div>
+                </div>`;
+            });
+
+            resultDiv.innerHTML = html;
+        }
+
+        // Поиск при нажатии Enter
+        document.getElementById('ownerInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchData();
+            }
+        });
+
+        // Первоначальная загрузка - показать все данные
+        function showAllData() {
+            const resultDiv = document.getElementById('result');
+            let html = '';
+            
+            data.forEach(item => {
+                html += `
+                <div class="result-item">
+                    <h3>${item.owner}</h3>
+                    <div class="field"><span class="field-name">Applications:</span> ${item.Applications}</div>
+                    <div class="field"><span class="field-name">Часы:</span> ${item['часы'] || 'не указано'}</div>
+                    <div class="field"><span class="field-name">SQL:</span> <code>${item.SQL}</code></div>
+                </div>`;
+            });
+
+            resultDiv.innerHTML = html;
+        }
+
+       
+    </script>
+</body>
+</html>
