@@ -90,6 +90,48 @@
             padding: 20px;
             font-style: italic;
         }
+        .sql-container {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+        .copy-btn {
+            padding: 5px 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        .copy-btn:hover {
+            background-color: #2980b9;
+        }
+        .copy-btn.copied {
+            background-color: #2ecc71;
+        }
+		.sql-container {
+    display: flex;
+    align-items: center;
+    margin-top: 5px;
+}
+.copy-btn {
+    padding: 5px 10px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: 10px;
+}
+.copy-btn:hover {
+    background-color: #2980b9;
+}
+.copy-btn.copied {
+    background-color: #2ecc71;
+}
     </style>
 </head>
 <body>
@@ -110,6 +152,32 @@
     </div>
 
     <script>
+	
+	function copyToClipboard(button, text) {
+    // Создаем временный textarea для копирования
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    
+    try {
+        document.execCommand('copy');
+        // Визуальная обратная связь
+        const originalText = button.textContent;
+        button.textContent = 'Скопировано!';
+        button.classList.add('copied');
+        
+        setTimeout(() => {
+            button.textContent = originalText;
+            button.classList.remove('copied');
+        }, 2000);
+    } catch (err) {
+        console.error('Ошибка при копировании: ', err);
+        button.textContent = 'Ошибка!';
+    }
+    
+    document.body.removeChild(textarea);
+}
         // Полные данные из Excel
         const data = [
             {
@@ -508,11 +576,45 @@
                     <h3>${item.owner}</h3>
                     <div class="field"><span class="field-name">Applications:</span> ${item.Applications}</div>
                     <div class="field"><span class="field-name">Часы:</span> ${item['часы'] || 'не указано'}</div>
-                    <div class="field"><span class="field-name">SQL:</span> <code>${item.SQL}</code></div>
+                   <div class="field"><span class="field-name">SQL:</span> 
+    <div class="sql-container">
+        <code>${item.SQL}</code>
+        <button class="copy-btn" onclick="copyToClipboard(this, \`${item.SQL}\`)">Копировать</button>
+    </div>
+</div>
+                    </div>
                 </div>`;
             });
 
             resultDiv.innerHTML = html;
+        }
+
+        // Экранирование HTML для безопасного отображения
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Копирование текста в буфер обмена
+        function copyToClipboard(button, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Визуальная обратная связь
+                const originalText = button.textContent;
+                button.textContent = 'Скопировано!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Ошибка при копировании: ', err);
+                button.textContent = 'Ошибка!';
+            });
         }
 
         // Поиск при нажатии Enter
@@ -533,14 +635,18 @@
                     <h3>${item.owner}</h3>
                     <div class="field"><span class="field-name">Applications:</span> ${item.Applications}</div>
                     <div class="field"><span class="field-name">Часы:</span> ${item['часы'] || 'не указано'}</div>
-                    <div class="field"><span class="field-name">SQL:</span> <code>${item.SQL}</code></div>
+                   <div class="field"><span class="field-name">SQL:</span> 
+    <div class="sql-container">
+        <code>${item.SQL}</code>
+        <button class="copy-btn" onclick="copyToClipboard(this, \`${item.SQL}\`)">Копировать</button>
+    </div>
+</div>
+                    </div>
                 </div>`;
             });
 
             resultDiv.innerHTML = html;
         }
-
-       
     </script>
 </body>
 </html>
